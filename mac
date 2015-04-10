@@ -221,7 +221,6 @@ brew_cask_install 'skype'
 brew_cask_install 'licecap'
 brew_cask_install 'moom'
 brew_cask_install 'alfred'
-brew cask alfred link # needed to add cask app to alfred
 
 if [ -f "$HOME/.laptop.local" ]; then
   . "$HOME/.laptop.local"
