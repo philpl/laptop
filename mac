@@ -182,6 +182,47 @@ if ! command -v rcup >/dev/null; then
   brew_install_or_upgrade 'rcm'
 fi
 
+# Install brew cask and install program via brew cask
+brew_cask_expand_alias() {
+  brew cask info "$1" 2>/dev/null | head -1 | awk '{gsub(/:/, ""); print $1}'
+}
+
+brew_cask_is_installed() {
+  local NAME=$(brew_cask_expand_alias "$1")
+  brew cask list -1 | grep -Fqx "$NAME"
+}
+
+brew_cask_install() {
+  if ! brew_cask_is_installed "$1"; then
+    brew cask install "$@"
+  fi
+}
+
+brew_cask_install_or_upgrade() {
+  if brew_cask_is_installed "$1"; then
+    echo "$1 is already installed, brew cask upgrade is not yet implemented"
+  else
+    brew cask install "$@"
+  fi
+}
+
+brew tap caskroom/cask
+brew_install_or_upgrade 'brew-cask'
+
+brew_cask_install 'dropbox'
+brew_cask_install 'google-chrome'
+brew_cask_install 'spotify'
+brew_cask_install 'slack'
+brew_cask_install 'garmin-express'
+brew_cask_install '1password'
+brew_cask_install 'virtualbox'
+brew_cask_install 'vagrant'
+brew_cask_install 'skype'
+brew_cask_install 'licecap'
+brew_cask_install 'moom'
+brew_cask_install 'alfred'
+brew cask alfred link # needed to add cask app to alfred
+
 if [ -f "$HOME/.laptop.local" ]; then
   . "$HOME/.laptop.local"
 fi
