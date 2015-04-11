@@ -209,6 +209,7 @@ brew_cask_install_or_upgrade() {
 brew tap caskroom/cask
 brew_install_or_upgrade 'brew-cask'
 
+brew_cask_install 'java'
 brew_cask_install 'dropbox'
 brew_cask_install 'google-chrome'
 brew_cask_install 'spotify'
