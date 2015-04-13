@@ -147,6 +147,7 @@ brew_install_or_upgrade 'hub'
 brew_install_or_upgrade 'node'
 brew_install_or_upgrade 'tree'
 brew_install_or_upgrade 'watch'
+brew_install_or_upgrade 'ssh-copy-id'
 brew_install_or_upgrade 'sbt'
 
 brew_install_or_upgrade 'rbenv'
