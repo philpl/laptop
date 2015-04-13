@@ -147,6 +147,7 @@ brew_install_or_upgrade 'hub'
 brew_install_or_upgrade 'node'
 brew_install_or_upgrade 'tree'
 brew_install_or_upgrade 'watch'
+brew_install_or_upgrade 'sbt'
 
 brew_install_or_upgrade 'rbenv'
 brew_install_or_upgrade 'ruby-build'
@@ -224,6 +225,7 @@ brew_cask_install 'skype'
 brew_cask_install 'licecap'
 brew_cask_install 'moom'
 brew_cask_install 'alfred'
+brew_cask_install 'scala-ide'
 
 if [ -f "$HOME/.laptop.local" ]; then
   . "$HOME/.laptop.local"
