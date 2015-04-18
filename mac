@@ -11,39 +11,9 @@ fancy_echo() {
   printf "\n$fmt\n" "$@"
 }
 
-append_to_zshrc() {
-  local text="$1" zshrc
-  local skip_new_line="${2:-0}"
-
-  if [ -w "$HOME/.zshrc.local" ]; then
-    zshrc="$HOME/.zshrc.local"
-  else
-    zshrc="$HOME/.zshrc"
-  fi
-
-  if ! grep -Fqs "$text" "$zshrc"; then
-    if [ "$skip_new_line" -eq 1 ]; then
-      printf "%s\n" "$text" >> "$zshrc"
-    else
-      printf "\n%s\n" "$text" >> "$zshrc"
-    fi
-  fi
-}
-
 trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 
 set -e
-
-if [ ! -d "$HOME/.bin/" ]; then
-  mkdir "$HOME/.bin"
-fi
-
-if [ ! -f "$HOME/.zshrc" ]; then
-  touch "$HOME/.zshrc"
-fi
-
-# shellcheck disable=SC2016
-append_to_zshrc 'export PATH="$HOME/.bin:$PATH"'
 
 case "$SHELL" in
   */zsh) : ;;
@@ -87,21 +57,6 @@ brew_expand_alias() {
   brew info "$1" 2>/dev/null | head -1 | awk '{gsub(/:/, ""); print $1}'
 }
 
-brew_launchctl_restart() {
-  local name="$(brew_expand_alias "$1")"
-  local domain="homebrew.mxcl.$name"
-  local plist="$domain.plist"
-
-  fancy_echo "Restarting %s ..." "$1"
-  mkdir -p "$HOME/Library/LaunchAgents"
-  ln -sfv "/usr/local/opt/$name/$plist" "$HOME/Library/LaunchAgents"
-
-  if launchctl list | grep -Fq "$domain"; then
-    launchctl unload "$HOME/Library/LaunchAgents/$plist" >/dev/null
-  fi
-  launchctl load "$HOME/Library/LaunchAgents/$plist" >/dev/null
-}
-
 gem_install_or_update() {
   if gem list "$1" --installed > /dev/null; then
     fancy_echo "Updating %s ..." "$1"
@@ -118,11 +73,6 @@ if ! command -v brew >/dev/null; then
     curl -fsS \
       'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
 
-    append_to_zshrc '# recommended by brew doctor'
-
-    # shellcheck disable=SC2016
-    append_to_zshrc 'export PATH="/usr/local/bin:$PATH"' 1
-
     export PATH="/usr/local/bin:$PATH"
 else
   fancy_echo "Homebrew already installed. Skipping ..."
@@ -131,34 +81,60 @@ fi
 fancy_echo "Updating Homebrew formulas ..."
 brew update
 
+# Git
 brew_install_or_upgrade 'git'
-brew_install_or_upgrade 'postgres'
-brew_launchctl_restart 'postgresql'
-brew_install_or_upgrade 'redis'
-brew_launchctl_restart 'redis'
+brew_install_or_upgrade 'git-flow'
+brew_install_or_upgrade 'hub'
+
+# Ag
 brew_install_or_upgrade 'the_silver_searcher'
-brew_install_or_upgrade 'vim'
+
+# SVN
+brew_install_or_upgrade 'subversion'
+
+# NVM
+node_version="0.10"
+
+brew_install_or_upgrade 'nvm'
+nvm install "$node_version"
+
+fancy_echo "Setting $node_version as the global default nodejs..."
+nvm alias default "$node_version"
+
+# Neovim
+brew_tap 'neovim/homebrew-neovim'
+fancy_echo "Installing neovim ..."
+brew install --HEAD neovim
+
+# CTags
 brew_install_or_upgrade 'ctags'
+
+# Tmux
 brew_install_or_upgrade 'tmux'
+
+# Figure that shit out
 brew_install_or_upgrade 'reattach-to-user-namespace'
 brew_install_or_upgrade 'imagemagick'
-brew_install_or_upgrade 'qt'
-brew_install_or_upgrade 'hub'
-brew_install_or_upgrade 'node'
 brew_install_or_upgrade 'tree'
-brew_install_or_upgrade 'watch'
 brew_install_or_upgrade 'ssh-copy-id'
-brew_install_or_upgrade 'sbt'
+brew_install_or_upgrade 'libyaml'
+brew_install_or_upgrade 'httpie'
+brew_install_or_upgrade 'battery'
+brew_install_or_upgrade 'ctags'
 
-brew_install_or_upgrade 'rbenv'
-brew_install_or_upgrade 'ruby-build'
+# Tmate
+brew_tap 'nviennot/tmate'
+brew_install_or_upgrade 'tmate'
 
-# shellcheck disable=SC2016
-append_to_zshrc 'eval "$(rbenv init - zsh --no-rehash)"' 1
+# Ruby Env
+if [ ! -d "$HOME/.rbenv" ]; then
+  brew_install_or_upgrade 'rbenv'
+  brew_install_or_upgrade 'ruby-build'
+fi
 
+# Upgrade OpenSSL
 brew_install_or_upgrade 'openssl'
 brew unlink openssl && brew link openssl --force
-brew_install_or_upgrade 'libyaml'
 
 ruby_version="$(curl -sSL http://ruby.thoughtbot.com/latest)"
 
@@ -186,6 +162,11 @@ if ! command -v rcup >/dev/null; then
   brew_install_or_upgrade 'rcm'
 fi
 
+git clone "https://github.com/philplckthun/dotfiles.git" "$HOME/dotfiles"
+DOTFILES_DIRS="~/dotfiles"
+fancy_echo "Configuring dotfiles ..."
+rcup
+
 # Install brew cask and install program via brew cask
 brew_cask_expand_alias() {
   brew cask info "$1" 2>/dev/null | head -1 | awk '{gsub(/:/, ""); print $1}'
@@ -210,23 +191,20 @@ brew_cask_install_or_upgrade() {
   fi
 }
 
-brew tap caskroom/cask
+brew tap 'caskroom/cask'
 brew_install_or_upgrade 'brew-cask'
 
 brew_cask_install 'java'
-brew_cask_install 'dropbox'
 brew_cask_install 'google-chrome'
 brew_cask_install 'spotify'
 brew_cask_install 'slack'
-brew_cask_install 'garmin-express'
-brew_cask_install '1password'
-brew_cask_install 'virtualbox'
-brew_cask_install 'vagrant'
 brew_cask_install 'skype'
-brew_cask_install 'licecap'
-brew_cask_install 'moom'
-brew_cask_install 'alfred'
-brew_cask_install 'scala-ide'
+brew_cask_install 'transmission'
+brew_cask_install 'kitematic'
+
+brew tap 'caskroom/versions'
+
+brew_cask_install 'iterm2-nightly'
 
 if [ -f "$HOME/.laptop.local" ]; then
   . "$HOME/.laptop.local"
