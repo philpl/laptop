@@ -121,6 +121,7 @@ brew_install_or_upgrade 'libyaml'
 brew_install_or_upgrade 'httpie'
 brew_install_or_upgrade 'battery'
 brew_install_or_upgrade 'ctags'
+brew_install_or_upgrade 'thefuck'
 
 # Tmate
 brew_tap 'nviennot/tmate'
